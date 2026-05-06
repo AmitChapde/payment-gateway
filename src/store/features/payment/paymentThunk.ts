@@ -23,16 +23,24 @@ export const makePayment = createAsyncThunk(
       if (result.success) {
         return {
           status: "success",
-          transaction,
+
+          transaction: {
+            ...transaction,
+            status: "success",
+            failureReason: undefined,
+          },
         };
       }
 
       return thunkAPI.rejectWithValue({
         status: "failed",
+
         transaction: {
           ...transaction,
+          status: "failed",
           failureReason: result.reason,
         },
+
         error: result.reason,
       });
     } catch (error) {
@@ -47,9 +55,14 @@ export const makePayment = createAsyncThunk(
       }
 
       return thunkAPI.rejectWithValue({
-        status: "failed",
-        transaction,
-        error: "Network error. Please try again.",
+        status: "timeout",
+
+        transaction: {
+          ...transaction,
+          status: "timeout",
+        },
+
+        error: "Payment timed out",
       });
     }
   },

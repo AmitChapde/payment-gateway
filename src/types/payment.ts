@@ -7,11 +7,7 @@ export type PaymentStatus =
 
 export type Currency = "INR" | "USD";
 
-export type CardType =
-  | "visa"
-  | "mastercard"
-  | "amex"
-  | "unknown";
+export type CardType = "visa" | "mastercard" | "amex" | "unknown";
 
 export interface PaymentPayload {
   transactionId: string;
@@ -33,6 +29,7 @@ export interface Transaction {
   createdAt: string;
   attempts: number;
   failureReason?: string;
+  payload?: PaymentPayload;
 }
 
 export interface PaymentState {
@@ -41,7 +38,6 @@ export interface PaymentState {
   history: Transaction[];
   error: string | null;
 }
-
 
 export interface PaymentFormValues {
   cardHolder: string;
