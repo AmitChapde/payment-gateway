@@ -41,3 +41,13 @@ export interface PaymentState {
   history: Transaction[];
   error: string | null;
 }
+
+
+export interface PaymentFormValues {
+  cardHolder: string;
+  cardNumber: string;
+  expiry: string;
+  cvv: string;
+  amount: string;
+  currency: Currency;
+}
