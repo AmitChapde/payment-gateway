@@ -1,9 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import {
-  PaymentState,
-  PaymentStatus,
-  Transaction,
-} from "@/types/payment";
+import { PaymentState, PaymentStatus, Transaction } from "@/types/payment";
+import { makePayment } from "./paymentThunk";
 
 const initialState: PaymentState = {
   status: "idle",
@@ -12,13 +9,8 @@ const initialState: PaymentState = {
   error: null,
 };
 
-function upsertTransaction(
-  history: Transaction[],
-  transaction: Transaction
-) {
-  const existingIndex = history.findIndex(
-    (item) => item.id === transaction.id
-  );
+function upsertTransaction(history: Transaction[], transaction: Transaction) {
+  const existingIndex = history.findIndex((item) => item.id === transaction.id);
 
   if (existingIndex !== -1) {
     history[existingIndex] = transaction;
@@ -31,7 +23,40 @@ const paymentSlice = createSlice({
   name: "payment",
 
   initialState,
+  extraReducers: (builder) => {
+    builder
 
+      .addCase(makePayment.pending, (state) => {
+        state.status = "processing";
+        state.error = null;
+      })
+
+      .addCase(makePayment.fulfilled, (state, action) => {
+        state.status = "success";
+
+        state.currentTransaction = action.payload.transaction;
+
+        state.error = null;
+
+        upsertTransaction(state.history, action.payload.transaction);
+      })
+
+      .addCase(makePayment.rejected, (state, action) => {
+        const payload = action.payload as {
+          status: "failed" | "timeout";
+          transaction: Transaction;
+          error: string;
+        };
+
+        state.status = payload.status;
+
+        state.currentTransaction = payload.transaction;
+
+        state.error = payload.error;
+
+        upsertTransaction(state.history, payload.transaction);
+      });
+  },
   reducers: {
     setProcessing(state) {
       state.status = "processing";
@@ -44,7 +69,7 @@ const paymentSlice = createSlice({
         transaction: Transaction;
         status: PaymentStatus;
         error?: string;
-      }>
+      }>,
     ) {
       const { transaction, status, error } = action.payload;
 
