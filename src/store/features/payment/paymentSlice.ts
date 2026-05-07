@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { PaymentState, PaymentStatus, Transaction } from "@/types/payment";
+import { PaymentState, Transaction } from "@/types/payment";
 import { makePayment } from "./paymentThunk";
 
 const initialState: PaymentState = {
@@ -82,30 +82,6 @@ const paymentSlice = createSlice({
       });
   },
   reducers: {
-    setProcessing(state) {
-      state.status = "processing";
-      state.error = null;
-    },
-
-    setPaymentResult(
-      state,
-      action: PayloadAction<{
-        transaction: Transaction;
-        status: PaymentStatus;
-        error?: string;
-      }>,
-    ) {
-      const { transaction, status, error } = action.payload;
-
-      state.status = status;
-
-      state.currentTransaction = transaction;
-
-      state.error = error || null;
-
-      upsertTransaction(state.history, transaction);
-    },
-
     setSelectedTransaction(state, action: PayloadAction<Transaction | null>) {
       state.selectedTransaction = action.payload;
     },
@@ -123,8 +99,6 @@ const paymentSlice = createSlice({
 });
 
 export const {
-  setProcessing,
-  setPaymentResult,
   loadTransactions,
   resetPaymentState,
   setSelectedTransaction

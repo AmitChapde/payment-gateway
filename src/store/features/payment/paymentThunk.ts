@@ -2,7 +2,6 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 import { processPayment } from "@/services/payment.service";
 
-import { PaymentPayload, Transaction } from "@/types/payment";
 import {
   MakePaymentArgs,
   MakePaymentFailure,
