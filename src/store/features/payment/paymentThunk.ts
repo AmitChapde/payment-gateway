@@ -3,20 +3,20 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { processPayment } from "@/services/payment.service";
 
 import { PaymentPayload, Transaction } from "@/types/payment";
+import {
+  MakePaymentArgs,
+  MakePaymentFailure,
+  MakePaymentSuccess,
+} from "@/types/payment";
 
-export const makePayment = createAsyncThunk(
+export const makePayment = createAsyncThunk<
+  MakePaymentSuccess,
+  MakePaymentArgs,
+  { rejectValue: MakePaymentFailure }
+>(
   "payment/makePayment",
 
-  async (
-    {
-      payload,
-      transaction,
-    }: {
-      payload: PaymentPayload;
-      transaction: Transaction;
-    },
-    thunkAPI,
-  ) => {
+  async ({ payload, transaction }: MakePaymentArgs, thunkAPI) => {
     try {
       const result = await processPayment(payload);
 
@@ -48,21 +48,26 @@ export const makePayment = createAsyncThunk(
         if (error.name === "AbortError") {
           return thunkAPI.rejectWithValue({
             status: "timeout",
-            transaction,
+            transaction: {
+              ...transaction,
+              status: "timeout",
+              failureReason: "Payment timed out",
+            },
             error: "Payment timed out",
           });
         }
       }
 
       return thunkAPI.rejectWithValue({
-        status: "timeout",
+        status: "failed",
 
         transaction: {
           ...transaction,
-          status: "timeout",
+          status: "failed",
+          failureReason: "Network error",
         },
 
-        error: "Payment timed out",
+        error: "Network error. Please try again.",
       });
     }
   },

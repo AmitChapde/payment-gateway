@@ -14,6 +14,7 @@ import {
 } from "@/utils/validation";
 import { PaymentFormValues } from "@/types/payment";
 import CardPreview from "./CardPreview";
+import { FaCcAmex, FaCcMastercard, FaCcVisa } from "react-icons/fa6";
 
 export default function PaymentForm() {
   const dispatch = useAppDispatch();
@@ -55,7 +56,7 @@ export default function PaymentForm() {
         return validateCardHolder(value);
 
       case "cardNumber":
-        return validateCardNumber(value);
+        return validateCardNumber(value, cardType);
 
       case "expiry":
         return validateExpiry(value);
@@ -215,7 +216,21 @@ export default function PaymentForm() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="mx-auto w-full max-w-md space-y-6">
+      <div className="text-center">
+        <p className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
+          Secure Checkout
+        </p>
+
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-950">
+          Complete your{" "}
+          <span className="relative inline-block">
+            <span className="absolute inset-x-0 bottom-1 h-3 rounded-full " />
+            <span className="relative text-emerald-800">payment</span>
+          </span>
+        </h1>
+      </div>
+
       <CardPreview
         cardHolder={values.cardHolder}
         cardNumber={values.cardNumber}
@@ -224,7 +239,7 @@ export default function PaymentForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="mx-auto space-y-5 rounded-xl border bg-white p-6 text-zinc-900 shadow-sm"
+        className="mx-auto space-y-5 rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-xl shadow-zinc-200/70"
       >
         <div className="space-y-2">
           <label htmlFor="cardHolder" className="block text-sm font-medium">
@@ -240,7 +255,7 @@ export default function PaymentForm() {
             onBlur={handleBlur}
             aria-invalid={!!errors.cardHolder}
             aria-describedby="cardHolder-error"
-            className="w-full rounded-md border bg-white px-3 py-2 text-zinc-900 outline-none placeholder:text-zinc-400"
+            className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
             placeholder="John Doe"
           />
 
@@ -267,13 +282,17 @@ export default function PaymentForm() {
               aria-invalid={!!errors.cardNumber}
               aria-describedby="cardNumber-error"
               maxLength={19}
-              className="w-full rounded-md border bg-white px-3 py-2 text-zinc-900 outline-none placeholder:text-zinc-400"
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-14 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
               placeholder="4242 4242 4242 4242"
             />
 
-            <span className="absolute right-3 top-2 text-sm font-medium capitalize text-zinc-700">
-              {cardType}
-            </span>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-3xl text-zinc-500">
+              {cardType === "visa" && <FaCcVisa />}
+
+              {cardType === "mastercard" && <FaCcMastercard />}
+
+              {cardType === "amex" && <FaCcAmex />}
+            </div>
           </div>
 
           {touched.cardNumber && errors.cardNumber && (
@@ -300,7 +319,7 @@ export default function PaymentForm() {
               aria-describedby="expiry-error"
               placeholder="MM/YY"
               maxLength={5}
-              className="w-full rounded-md border bg-white px-3 py-2 text-zinc-900 outline-none placeholder:text-zinc-400"
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
             />
 
             {touched.expiry && errors.expiry && (
@@ -325,7 +344,7 @@ export default function PaymentForm() {
               aria-invalid={!!errors.cvv}
               aria-describedby="cvv-error"
               maxLength={cardType === "amex" ? 4 : 3}
-              className="w-full rounded-md border bg-white px-3 py-2 text-zinc-900 outline-none placeholder:text-zinc-400"
+              className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
               placeholder={cardType === "amex" ? "1234" : "123"}
             />
 
@@ -342,12 +361,12 @@ export default function PaymentForm() {
             Amount
           </label>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <select
               name="currency"
               value={values.currency}
               onChange={handleChange}
-              className="rounded-md border bg-white px-3 py-2 text-zinc-900"
+              className="cursor-pointer rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 shadow-sm outline-none transition hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
             >
               <option value="INR">INR</option>
 
@@ -363,8 +382,8 @@ export default function PaymentForm() {
               onBlur={handleBlur}
               aria-invalid={!!errors.amount}
               aria-describedby="amount-error"
-              className="flex-1 rounded-md border bg-white px-3 py-2 text-zinc-900 outline-none placeholder:text-zinc-400"
-                  placeholder="100"
+              className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-zinc-900 shadow-sm outline-none transition placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zinc-950 focus:ring-4 focus:ring-zinc-200"
+              placeholder="100"
             />
           </div>
 
@@ -378,7 +397,7 @@ export default function PaymentForm() {
         <button
           type="submit"
           disabled={!isFormValid || status === "processing"}
-          className="w-full rounded-md bg-black px-4 py-2 text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full cursor-pointer rounded-lg bg-zinc-950 px-4 py-3 font-medium text-white shadow-lg shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         >
           {status === "processing" ? "Processing..." : "Pay Now"}
         </button>

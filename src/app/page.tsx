@@ -6,7 +6,12 @@ import StatusScreen from "@/components/payment/StatusScreen";
 
 import TransactionHistory from "@/components/payment/TransactionHistory";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import TransactionDetails from "@/components/payment/TransactionDetails";
+
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "@/store/hooks";
 
 import { makePayment } from "@/store/features/payment/paymentThunk";
 
@@ -22,7 +27,8 @@ export default function HomePage() {
   async function handleRetry() {
     if (
       !currentTransaction ||
-      !currentTransaction.payload
+      !currentTransaction.payload ||
+      currentTransaction.attempts >= 3
     ) {
       return;
     }
@@ -48,18 +54,20 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 text-zinc-950">
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
+    <main className="min-h-screen bg-zinc-50 px-4 py-10 text-zinc-950 sm:px-6 lg:flex lg:h-screen lg:items-center lg:overflow-hidden lg:px-8">
+      <div className="mx-auto grid w-full max-w-6xl items-stretch gap-8 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+        <div className="space-y-6 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <PaymentForm />
 
           <StatusScreen
             onRetry={handleRetry}
           />
+
+          <TransactionDetails />
         </div>
 
         <TransactionHistory />
       </div>
     </main>
   );
-}
+} 

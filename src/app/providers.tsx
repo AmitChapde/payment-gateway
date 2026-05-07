@@ -22,8 +22,16 @@ function StorePersistence() {
     );
 
     const unsubscribe = store.subscribe(() => {
+      const settledTransactions =
+        store
+          .getState()
+          .payment.history.filter(
+            (transaction) =>
+              transaction.status !== "processing"
+          );
+
       saveTransactions(
-        store.getState().payment.history
+        settledTransactions
       );
     });
 

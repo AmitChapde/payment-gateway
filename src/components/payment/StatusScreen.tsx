@@ -1,12 +1,18 @@
 "use client";
 
-import { useAppSelector } from "@/store/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "@/store/hooks";
+import { resetPaymentState } from "@/store/features/payment/paymentSlice";
 
 interface StatusScreenProps {
   onRetry: () => void;
 }
 
 export default function StatusScreen({ onRetry }: StatusScreenProps) {
+  const dispatch = useAppDispatch();
+
   const { status, currentTransaction, error } = useAppSelector(
     (state) => state.payment,
   );
@@ -17,58 +23,141 @@ export default function StatusScreen({ onRetry }: StatusScreenProps) {
 
   const isFailureState = status === "failed" || status === "timeout";
 
-  const canRetry = currentTransaction.attempts < 3 && isFailureState;
+  const maxAttempts = 3;
+
+  const remainingAttempts = Math.max(
+    maxAttempts - currentTransaction.attempts,
+    0,
+  );
+
+  const canRetry = remainingAttempts > 0 && isFailureState;
+
+  function handleClose() {
+    dispatch(resetPaymentState());
+  }
 
   return (
     <div
-      className="mx-auto max-w-md rounded-xl border bg-white p-6 text-zinc-900 shadow-sm"
-      tabIndex={-1}
+      className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-950/50 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payment-status-title"
     >
-      <h2 className="mb-4 text-2xl font-semibold">
-        {status === "processing" && "Processing Payment"}
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 text-zinc-900 shadow-2xl shadow-zinc-950/30"
+        tabIndex={-1}
+      >
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-zinc-500">
+              Payment Status
+            </p>
 
-        {status === "success" && "Payment Successful"}
+            <h2
+              id="payment-status-title"
+              className="mt-2 text-2xl font-semibold tracking-tight"
+            >
+              {status === "processing" && "Processing Payment"}
 
-        {status === "failed" && "Payment Failed"}
+              {status === "success" && "Payment Successful"}
 
-        {status === "timeout" && "Payment Timed Out"}
-      </h2>
+              {status === "failed" && "Payment Failed"}
 
-      <div className="space-y-2 text-sm">
-        <p>
-          <span className="font-medium">Transaction ID:</span>{" "}
-          {currentTransaction.id}
-        </p>
+              {status === "timeout" && "Payment Timed Out"}
+            </h2>
+          </div>
 
-        <p>
-          <span className="font-medium">Amount:</span>{" "}
-          {currentTransaction.currency} {currentTransaction.amount}
-        </p>
+          {status !== "processing" && (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="cursor-pointer rounded-full px-2 py-1 text-sm text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+              aria-label="Close payment status"
+            >
+              Close
+            </button>
+          )}
+        </div>
 
-        {isFailureState && (
-          <p>
-            <span className="font-medium">Attempts:</span>{" "}
-            {currentTransaction.attempts} of 3
+        {status === "success" && (
+          <p className="mb-5 rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+            Your payment was approved and added to transaction history.
           </p>
         )}
 
-        {error && <p className="text-red-500">{error}</p>}
+        <div className="space-y-3 text-sm">
+          <div className="rounded-xl bg-zinc-50 p-4">
+            <p className="font-medium text-zinc-900">Transaction ID</p>
+
+            <p className="mt-1 break-all text-zinc-600">
+              {currentTransaction.id}
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-zinc-50 p-4">
+            <p className="font-medium text-zinc-900">Amount</p>
+
+            <p className="mt-1 text-zinc-600">
+              {currentTransaction.currency} {currentTransaction.amount}
+            </p>
+          </div>
+
+          {isFailureState && (
+            <div className="rounded-xl bg-zinc-50 p-4">
+              <p className="font-medium text-zinc-900">
+                Attempt {currentTransaction.attempts} of {maxAttempts}
+              </p>
+
+              <p className="mt-1 text-zinc-600">
+                {remainingAttempts > 0
+                  ? `${remainingAttempts} ${
+                      remainingAttempts === 1 ? "retry" : "retries"
+                    } remaining for this transaction.`
+                  : "No retries remaining for this transaction."}
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <p className="rounded-xl bg-red-50 p-4 text-red-600">{error}</p>
+          )}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {canRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="cursor-pointer rounded-lg bg-zinc-950 px-4 py-2.5 font-medium text-white shadow-lg shadow-zinc-300 transition hover:-translate-y-0.5 hover:bg-zinc-800"
+            >
+              Retry Payment
+            </button>
+          )}
+
+          {status !== "processing" && (
+            <button
+              type="button"
+              onClick={handleClose}
+              className="cursor-pointer rounded-lg bg-zinc-100 px-4 py-2.5 font-medium text-zinc-900 transition hover:bg-zinc-200"
+            >
+              {status === "success" ? "Done" : "Dismiss"}
+            </button>
+          )}
+        </div>
+
+        {!canRetry && isFailureState && (
+          <p className="mt-4 text-sm text-red-500">
+            Final failure after {maxAttempts} attempts. Please start a new
+            payment or contact support if the issue continues.
+          </p>
+        )}
+
+        {status === "processing" && (
+          <p className="mt-4 rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
+            Please wait while the transaction is being confirmed.
+          </p>
+        )}
       </div>
-
-      {canRetry && (
-        <button
-          onClick={onRetry}
-          className="mt-6 rounded-md bg-black px-4 py-2 text-white transition disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Retry Payment
-        </button>
-      )}
-
-      {!canRetry && isFailureState && (
-        <p className="mt-4 text-sm text-red-500">
-          Maximum retry attempts reached.
-        </p>
-      )}
     </div>
   );
 }

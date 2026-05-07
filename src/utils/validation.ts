@@ -1,6 +1,4 @@
-export function validateCardHolder(
-  value: string
-) {
+export function validateCardHolder(value: string) {
   if (!value.trim()) {
     return "Cardholder name is required";
   }
@@ -8,27 +6,30 @@ export function validateCardHolder(
   return "";
 }
 
-export function validateCardNumber(
-  value: string
-) {
+export function validateCardNumber(value: string, cardType: CardType) {
   const cleaned = value.replace(/\s/g, "");
 
-  if (cleaned.length < 16) {
+  if (cardType === "amex") {
+    if (cleaned.length !== 15) {
+      return "Amex card number must be 15 digits";
+    }
+
+    return "";
+  }
+
+  if (cleaned.length !== 16) {
     return "Card number must be 16 digits";
   }
 
   return "";
 }
 
-export function validateExpiry(
-  value: string
-) {
+export function validateExpiry(value: string) {
   if (!/^\d{2}\/\d{2}$/.test(value)) {
     return "Expiry must be MM/YY";
   }
 
-  const [monthStr, yearStr] =
-    value.split("/");
+  const [monthStr, yearStr] = value.split("/");
 
   const month = Number(monthStr);
 
@@ -44,24 +45,16 @@ export function validateExpiry(
 
   const currentMonth = now.getMonth() + 1;
 
-  if (
-    year < currentYear ||
-    (year === currentYear &&
-      month < currentMonth)
-  ) {
+  if (year < currentYear || (year === currentYear && month < currentMonth)) {
     return "Card has expired";
   }
 
   return "";
 }
 
-
 import { CardType } from "@/types/payment";
 
-export function validateCVV(
-  value: string,
-  cardType: CardType
-) {
+export function validateCVV(value: string, cardType: CardType) {
   const cleaned = value.replace(/\D/g, "");
 
   if (cardType === "amex") {
@@ -79,10 +72,7 @@ export function validateCVV(
   return "";
 }
 
-
-export function validateAmount(
-  amount: number
-) {
+export function validateAmount(amount: number) {
   if (amount <= 0) {
     return "Amount must be greater than 0";
   }

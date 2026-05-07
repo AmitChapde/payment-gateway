@@ -1,8 +1,17 @@
 import { PaymentPayload } from "@/types/payment";
 
+type PaymentApiResponse =
+  | {
+      success: true;
+    }
+  | {
+      success: false;
+      reason: string;
+    };
+
 export async function processPayment(
   payload: PaymentPayload
-) {
+): Promise<PaymentApiResponse> {
   const controller = new AbortController();
 
   const timeoutId = setTimeout(() => {
@@ -12,6 +21,7 @@ export async function processPayment(
   try {
     const response = await fetch("/api/pay", {
       method: "POST",
+      cache: "no-store",
 
       headers: {
         "Content-Type": "application/json",
@@ -22,7 +32,7 @@ export async function processPayment(
       signal: controller.signal,
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as PaymentApiResponse;
 
     return data;
   } finally {

@@ -35,6 +35,7 @@ export interface Transaction {
 export interface PaymentState {
   status: PaymentStatus;
   currentTransaction: Transaction | null;
+  selectedTransaction: Transaction | null;
   history: Transaction[];
   error: string | null;
 }
@@ -47,3 +48,20 @@ export interface PaymentFormValues {
   amount: string;
   currency: Currency;
 }
+
+
+export type MakePaymentArgs = {
+  payload: PaymentPayload;
+  transaction: Transaction;
+};
+
+export type MakePaymentSuccess = {
+  status: "success";
+  transaction: Transaction;
+};
+
+export type MakePaymentFailure = {
+  status: "failed" | "timeout";
+  transaction: Transaction;
+  error: string;
+};

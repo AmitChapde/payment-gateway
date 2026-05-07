@@ -7,6 +7,7 @@ const initialState: PaymentState = {
   currentTransaction: null,
   history: [],
   error: null,
+  selectedTransaction: null,
 };
 
 function upsertTransaction(history: Transaction[], transaction: Transaction) {
@@ -26,9 +27,14 @@ const paymentSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      .addCase(makePayment.pending, (state) => {
+      .addCase(makePayment.pending, (state, action) => {
         state.status = "processing";
+
+        state.currentTransaction = action.meta.arg.transaction;
+
         state.error = null;
+
+        upsertTransaction(state.history, action.meta.arg.transaction);
       })
 
       .addCase(makePayment.fulfilled, (state, action) => {
@@ -42,6 +48,24 @@ const paymentSlice = createSlice({
       })
 
       .addCase(makePayment.rejected, (state, action) => {
+        if (!action.payload) {
+          const failedTransaction = {
+            ...action.meta.arg.transaction,
+            status: "failed" as const,
+            failureReason: action.error.message || "Payment failed",
+          };
+
+          state.status = "failed";
+
+          state.currentTransaction = failedTransaction;
+
+          state.error = failedTransaction.failureReason;
+
+          upsertTransaction(state.history, failedTransaction);
+
+          return;
+        }
+
         const payload = action.payload as {
           status: "failed" | "timeout";
           transaction: Transaction;
@@ -82,6 +106,10 @@ const paymentSlice = createSlice({
       upsertTransaction(state.history, transaction);
     },
 
+    setSelectedTransaction(state, action: PayloadAction<Transaction | null>) {
+      state.selectedTransaction = action.payload;
+    },
+
     loadTransactions(state, action: PayloadAction<Transaction[]>) {
       state.history = action.payload;
     },
@@ -99,6 +127,7 @@ export const {
   setPaymentResult,
   loadTransactions,
   resetPaymentState,
+  setSelectedTransaction
 } = paymentSlice.actions;
 
 export default paymentSlice.reducer;
