@@ -342,8 +342,6 @@ Implemented accessibility improvements include:
 
 -   Modal accessibility
 
--   ESC close support
-
 -   Visible focus rings
 
 * * * * *
