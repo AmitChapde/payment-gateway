@@ -1,10 +1,10 @@
 "use client";
 
-import {
-  useAppDispatch,
-  useAppSelector,
-} from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+
 import { resetPaymentState } from "@/store/features/payment/paymentSlice";
+
+import { useCallback, useEffect, useRef } from "react";
 
 interface StatusScreenProps {
   onRetry: () => void;
@@ -16,6 +16,48 @@ export default function StatusScreen({ onRetry }: StatusScreenProps) {
   const { status, currentTransaction, error } = useAppSelector(
     (state) => state.payment,
   );
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousStatusRef = useRef(status);
+  const previousFocusedElementRef = useRef<HTMLElement | null>(null);
+
+  const handleClose = useCallback(() => {
+    dispatch(resetPaymentState());
+
+    window.setTimeout(() => {
+      previousFocusedElementRef.current?.focus();
+      previousFocusedElementRef.current = null;
+    }, 0);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (status !== "idle" && previousStatusRef.current === "idle") {
+      previousFocusedElementRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+    }
+
+    if (status !== "idle" && modalRef.current) {
+      modalRef.current.focus();
+    }
+
+    previousStatusRef.current = status;
+  }, [status]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && status !== "processing") {
+        handleClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleClose, status]);
 
   if (status === "idle" || !currentTransaction) {
     return null;
@@ -32,8 +74,10 @@ export default function StatusScreen({ onRetry }: StatusScreenProps) {
 
   const canRetry = remainingAttempts > 0 && isFailureState;
 
-  function handleClose() {
-    dispatch(resetPaymentState());
+  function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === e.currentTarget && status !== "processing") {
+      handleClose();
+    }
   }
 
   return (
@@ -42,10 +86,12 @@ export default function StatusScreen({ onRetry }: StatusScreenProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-status-title"
+      onClick={handleBackdropClick}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white p-6 text-zinc-900 shadow-2xl shadow-zinc-950/30"
+        ref={modalRef}
         tabIndex={-1}
+        className="w-full max-w-md rounded-2xl bg-white p-6 text-zinc-900 shadow-2xl shadow-zinc-950/30 focus:outline-none focus:ring-2 focus:ring-zinc-950"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -153,9 +199,13 @@ export default function StatusScreen({ onRetry }: StatusScreenProps) {
         )}
 
         {status === "processing" && (
-          <p className="mt-4 rounded-xl bg-zinc-50 p-4 text-sm text-zinc-600">
-            Please wait while the transaction is being confirmed.
-          </p>
+          <div className="mt-4 rounded-xl bg-zinc-50 p-4">
+            <div className="flex items-center gap-3 text-sm text-zinc-600">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+
+              <p>Please wait while the transaction is being confirmed.</p>
+            </div>
+          </div>
         )}
       </div>
     </div>

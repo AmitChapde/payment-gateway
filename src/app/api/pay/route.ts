@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   try {
     await req.json();
 
-    const random = 0.7;
+    const random = Math.random();
 
     if (random < 0.6) {
       await wait(2000);
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
